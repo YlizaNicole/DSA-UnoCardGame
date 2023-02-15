@@ -89,6 +89,17 @@ class Pickup4Card(Card):
         cards = game.pickup_pile.pick(self._amount)
         game.next_player().get_deck().add_cards(cards)
         game._turns._location = game._turns._location-1
+
+class WildCard(Card):
+    def __init__(self, number, colour):
+        Card.__init__(self, number, colour)
+        self._amount = 0
+    
+    def get_pickup_amount(self):
+        return self._amount
+    
+    def play(self, player, game):
+        game.wild()
     
 
 class Deck:
@@ -219,6 +230,9 @@ FULL_DECK = [
 
     (Pickup4Card(0, CardColour.black), (0, 2)),
     (Pickup4Card(0, CardColour.black), (0, 2)),
+
+    (WildCard(0, CardColour.black), (0, 2)),
+    (WildCard(0, CardColour.black), (0, 2)),
 ]
 ##adding List 
 
@@ -282,6 +296,12 @@ class TurnManager:
         self._location += count if self._direction else -count
         self._location %= self._max
         return self._players[self._location]
+    
+    def wild (self, count=0):
+        count += 1
+        self._location += count if self._direction else -count
+        self._location %= self._max
+        return self._players[self._location]
 
 
 class UnoGame:
@@ -322,6 +342,10 @@ class UnoGame:
     def skip(self):
         """Prevent the next player from taking their turn."""
         self._turns.skip() #DSA List Methods & Built-In FunctIons skip ()
+    
+    def wild(self):
+        """Prevent the next player from taking their turn."""
+        self._turns.skip()
 
     def reverse(self):
         """Transfer the turn back to the previous player and reverse the order."""
@@ -519,7 +543,8 @@ class CardView:
 
 CARD_ICONS = {
     SkipCard: "skip",
-    ReverseCard: "reverse"
+    ReverseCard: "reverse",
+    WildCard: "wild"
 }
 ##dictionary
 
@@ -575,12 +600,48 @@ class PickupCardView(CardView):
             self._canvas.itemconfig(self._text_view,
                                     text=f"+{card.get_pickup_amount()}")
 
+class wildCardView(CardView):
+    """
+    A card that has an image associated with it.
+    """
+
+    def draw(self):
+        """Draw the backface of the card to the canvas."""
+        super().draw()
+        self._image_view = None
+
+    def redraw(self, card):
+        """Redraw the card view with an icon.
+        Parameters:
+            card (Card): The card to draw to the canvas. If None, draw the
+                         backface of the card.
+        """
+        super().redraw(card)
+
+        if card is not None:
+            # clear text on the card
+            self._canvas.itemconfig(self._text_view, text="")
+
+            if self._image_view is None:
+                # draw an image based on the card's class
+                image = CARD_ICONS.get(card.__class__, "reverse")
+                self._image_view = self.draw_image(f"images/{image}.png")
+            else:
+                # show the image
+                self._canvas.itemconfig(self._image_view, state="normal")
+        else:
+            if self._image_view is not None:
+                # hide the image
+                self._canvas.itemconfig(self._image_view, state="hidden")
+
+
 
 CARD_VIEWS = {
     SkipCard: IconCardView,
     ReverseCard: IconCardView,
     Pickup2Card: PickupCardView,
-    Pickup4Card: PickupCardView
+    Pickup4Card: PickupCardView,
+    WildCard: wildCardView
 }
 
 
