@@ -18,6 +18,7 @@ class Card:
         self._number = number
         self._colour = colour
         self._amount = 0
+        self.anycolour = Any_Colour
 
     def get_number(self):
         return self._number
@@ -92,8 +93,8 @@ class Pickup4Card(Card):
         game._turns._location = game._turns._location-1
 
 class WildCard(Card):
-    def __init__(self, number, colour):
-        Card.__init__(self, number, colour)
+    def __init__(self, number, anycolour):
+        Card.__init__(self, number, anycolour)
         self._amount = 0
     
     def get_pickup_amount(self):
@@ -213,6 +214,7 @@ class CardColour(Enum):
     green = "#5d8402"
     black = "#222"
 
+Any_Colour= CardColour
 
 FULL_DECK = [
     (Card(0, CardColour.red), (0, 10)),
@@ -248,7 +250,7 @@ FULL_DECK = [
 ##adding List 
 
 
-SPECIAL_CARDS = [Pickup4Card]
+SPECIAL_CARDS = [Pickup4Card, WildCard]
 
 
 class TurnManager:
