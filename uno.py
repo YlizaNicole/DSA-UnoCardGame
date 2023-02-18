@@ -1,10 +1,11 @@
 #modification I want to change: 
 #turning the src in a single code DONE
-#adding the special wild card since the SRC isn't 
+#adding the special wild card since the SRC isn't  DONE
 #According  to the rule decreasing the number of +4 cards cause there are only 4 DONE
 #making the player 2 instead of 3 DONE
-
-
+#renaming the playerD DONE
+#Implementing the wild card functio DONE (back to player then change the color rather than into the deck) DONE
+#adding message Box uno if there are only 1 card in the players hand DONE 
 import random
 from enum import Enum
 import tkinter as tk
@@ -97,9 +98,13 @@ class WildCard(Card):
     
     def get_pickup_amount(self):
         return self._amount
-    
+
+    def matches(self, putdown_pile):
+        return True
+
     def play(self, player, game):
-        game.wild()
+        game.pickup_pile.pick(self._amount)
+        game.skip()
     
 
 class Deck:
@@ -154,6 +159,12 @@ class Player:
     def is_playable(self):
         raise NotImplementedError("is_playable to be implemented by subclasses")
     
+    def say_uno(self):
+        if self._deck.get_amount() == 1:
+            return True
+        else:
+            return False
+
     def has_won(self):
         if self._deck.get_amount() == 0:
             return True
@@ -297,11 +308,6 @@ class TurnManager:
         self._location %= self._max
         return self._players[self._location]
     
-    def wild (self, count=0):
-        count += 1
-        self._location += count if self._direction else -count
-        self._location %= self._max
-        return self._players[self._location]
 
 
 class UnoGame:
@@ -324,6 +330,7 @@ class UnoGame:
         self.special_pile = Deck()
 
         self._is_over = False
+        self._is_winning = False
         self.winner = None
 
     def next_player(self):
@@ -343,9 +350,6 @@ class UnoGame:
         """Prevent the next player from taking their turn."""
         self._turns.skip() #DSA List Methods & Built-In FunctIons skip ()
     
-    def wild(self):
-        """Prevent the next player from taking their turn."""
-        self._turns.skip()
 
     def reverse(self):
         """Transfer the turn back to the previous player and reverse the order."""
@@ -354,6 +358,12 @@ class UnoGame:
     def get_turns(self):
         """(TurnManager) Returns the turn manager for this game."""
         return self._turns
+    def say_uno(self):
+        if self._deck.get_amount() == 1:
+            
+            return True
+        else:
+            return False
 
     def is_over(self):
         """
@@ -365,6 +375,11 @@ class UnoGame:
                 self._is_over = True
 
         return self._is_over
+    
+    def is_winning (self):
+        for player in self.players:
+            if player.say_uno():
+                messagebox.showinfo("UNO!")
 
     def select_card(self, player, card):
         """Perform actions for a player selecting a card
@@ -891,7 +906,7 @@ class UnoApp:
         # pick the card if it matches
         if card.matches(self.game.putdown_pile.top()):
             card = player.get_deck().get_cards().pop(slot)
-            self.game.select_card(player, card)
+            self.game.select_card(player, card) 
 
             # wait for next move
             self.step()
@@ -963,11 +978,17 @@ class UnoApp:
     def step(self):
         """Perform actions to advance the game a turn."""
         # end the game if a player has won
+
+        if self.game.is_winning(): 
+            return
+            
         if self.game.is_over():
             messagebox.showinfo("Game Over",
                                 f"{self.game.winner.get_name()} has won!")
             self._master.destroy()
             return
+        
+
 
         # move to the next player
         player = self.game.next_player()
@@ -999,7 +1020,7 @@ def main():
     root.title("Uno++")
 
     # build a list of players for the game
-    players = [HumanPlayer("YOU"), ComputerPlayer("PLAYER 2")]
+    players = [HumanPlayer("User"), ComputerPlayer("Ai")]
 
     # build a pickup pile
     pickup_pile = Deck(build_deck(FULL_DECK))
